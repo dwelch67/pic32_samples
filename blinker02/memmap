@@ -1,0 +1,15 @@
+
+/* memmap */
+MEMORY
+{
+   rom   : ORIGIN = 0x1D006000, LENGTH = 0x8000
+   vrom  : ORIGIN = 0x9D006000, LENGTH = 0x8000
+   vram  : ORIGIN = 0x80000000, LENGTH = 0x2000
+}
+
+SECTIONS
+{
+   .text : { *(.text*) } > vrom AT > rom
+   .bss  : { *(.bss*)  } > vram
+}
+

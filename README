@@ -1,0 +1,98 @@
+
+
+You may see that I have a lot of other ARM based projects at github,
+I do have a lot of low level ARM experience, as well as a fair amount
+with other platforms but never got into MIPS.  Have wanted to but
+needed a starting place.
+
+So this year I bought a couple of boards from Sparkfun.  The UBW32
+
+http://www.sparkfun.com/products/8971
+
+I bought is now retired and replaced with a newer one.  I dont know if
+that is good or bad as I found PIC32MX4 tools after buying this CUI32
+board
+
+http://www.sparkfun.com/products/9645
+
+Specifically this tool:
+
+http://members.dslextreme.com/users/paintyourdragon/uc/ubw32/ubw32.tar.bz2
+
+Linked to from this page:
+
+http://www.paintyourdragon.com/uc/ubw32/index.html
+
+Not without problems of course.  libhid-dev is apparently not supported
+by Ubuntu, or at least 10.10.  10.04 does have it and I was able to
+get the sources from debian/ubuntu for 10.04 and build and install
+it on 10.10.  Have not tried the newer Ubuntu versions....
+
+Gcc 4.1 or 4.2 is that much more of a problem these days so building
+the Microchip gcc for the pic32 was a bust.  I would rather, and did
+use Codesourcery lite and llvm instead.  Now maybe I did not look far
+and wide enough, what I keep finding are Microchip library based
+examples for these PIC32X chips.
+
+So I still have a lot to learn about MIPS and the instruction set, and
+a few questions/mysteries about some memory map stuff.  But was able
+to use gnu and llvm tools to build a few simple programs that work.
+
+These are NOT StickOS nor UBW32 programs.  These are C and/or assembly
+programs that replace StickOS or UBW32.  You can always put that firmware
+back on the board.
+
+The UBW32 and CUI32 websites show a noticeable amount of fear about
+using the wrong linker script to build the UBW32 or StickOS firmware.
+So with or without the Microchip sandbox I had some reservations.
+
+Looking at the UBW32 .hex file for the firmware it is obvious that
+the firmware is built for address 0x1D006000.  Interestingly the first
+handful of instructions are 0x9Dxxxxxx based.  So I had the linker
+script build my files the same way.  Likewise building for ram at
+0x80000000 seemed to make sense and worked.  Also figured out that
+little endian is being used so -EL on all the gnu tools is critical
+otherwise the .hex file comes out wrong.  Lastly the ubw32 program
+to load the flash didnt like a type 05 entry in the .hex file, probably
+a simple change in that program, which is not mine, so I wrote a
+quick program that takes the binutils created .hex file and creates
+another .hex file with the offending line removed.  The ihex tool takes
+something.hex in and creates something.hex.hex.  The .hex.hex file
+is the one you want to feed the ubw32 loader.  So far I have not
+bricked either of the boards despite playing around with memory maps
+and such.
+
+Codesourcery which I think is completely switched over to Mentor
+Graphics now, is currently THE place for ARM based gcc tools, so I went
+there to get MIPS based tools.  And that is what was used for gcc and
+binutils with these examples.
+
+I normally build the current llvm release (2.9 at the moment) as well
+as a copy of the cutting edge trunk from the svn repo.  They take a
+while to build, if you have a multi core processor using -j num with
+make makes a huge difference.  Their make file system is not perfect
+so unfortunately you have to make clean if there have been changes.
+LLVM is great as a cross compiler, you get all the targets in one
+tool, unlike others where you have to compile a new toolchain for each
+target.  Other than 32 vs 64 bit ints you can do most of your work
+target independent and then the last step go from bitcode to target
+specific assembler.  I use binutils assembler and linker to merge it
+with startup code and other hand written assembler and take it to a
+final binary.  I had some relocation problems both with gcc and llvm
+using -G0 on the gnu side and -relocation-model=static or
+-relocation-model=dynamic-no-pic with LLVM (llc).  As of this writing
+for the blinker02 example both static and dynamic-no-pic produced the
+exact same output.  Examine the makefile for more on how to use llvm
+for cross compiling, at least one way to do it.  I find it best to
+build all the C code, then use llvm-link to link into a single
+bitcode file.  Then optimize at that point where the optimizer has
+the most amount of meat to crunch on.  Then turn it into a single .s
+file to feed binutils.
+
+As of this writing there are only a couple of examples, an assembly only
+example using a counter based delay, blinker01.  Blinker02 is a baseline
+C based example.  Future examples will use more peripherals and get
+progressively more complicated.  No desire to clone the Microchip
+libraries or anything like that, take the programmers reference, schematics
+and figure things out.
+
