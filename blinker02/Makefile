@@ -30,7 +30,7 @@ OOPS = -std-compile-opts
 #  r6000    - Select the r6000 processor.
 
 
-all : blinker02.hex.hex blinker02.llvm.norm.hex.hex blinker02.llvm.opt.hex.hex
+all : blinker02.32.hex.hex blinker02.16.hex.hex blinker02.llvm.norm.hex.hex blinker02.llvm.opt.hex.hex
 
 
 clean :
@@ -49,17 +49,29 @@ ihex : ihex.c
 startup.o : startup.s
 	$(MIPSGNU)-as $(AOPS) startup.s -o startup.o
 
-blinker02.o : blinker02.c
-	$(MIPSGNU)-gcc $(COPS) -c blinker02.c -o blinker02.o
+blinker02.32.o : blinker02.c
+	$(MIPSGNU)-gcc $(COPS) -c blinker02.c -o blinker02.32.o
 
-blinker02.hex : memmap startup.o blinker02.o
-	$(MIPSGNU)-ld $(LDOPS) -T memmap startup.o blinker02.o -o blinker02.elf
-	$(MIPSGNU)-objdump -D blinker02.elf > blinker02.list
-	$(MIPSGNU)-objcopy blinker02.elf -O ihex blinker02.hex
+blinker02.32.hex : memmap startup.o blinker02.32.o
+	$(MIPSGNU)-ld $(LDOPS) -T memmap startup.o blinker02.32.o -o blinker02.32.elf
+	$(MIPSGNU)-objdump -D blinker02.32.elf > blinker02.32.list
+	$(MIPSGNU)-objcopy blinker02.32.elf -O ihex blinker02.32.hex
 	
-blinker02.hex.hex : blinker02.hex ihex
-	./ihex blinker02.hex
+blinker02.32.hex.hex : blinker02.32.hex ihex
+	./ihex blinker02.32.hex
 
+
+
+blinker02.16.o : blinker02.c
+	$(MIPSGNU)-gcc $(COPS) -mips16 -c blinker02.c -o blinker02.16.o
+
+blinker02.16.hex : memmap startup.o blinker02.16.o
+	$(MIPSGNU)-ld $(LDOPS) -T memmap startup.o blinker02.16.o -o blinker02.16.elf
+	$(MIPSGNU)-objdump -D blinker02.16.elf > blinker02.16.list
+	$(MIPSGNU)-objcopy blinker02.16.elf -O ihex blinker02.16.hex
+	
+blinker02.16.hex.hex : blinker02.16.hex ihex
+	./ihex blinker02.16.hex
 
 
 

@@ -15,7 +15,7 @@ void dowait ( void )
 
 void notmain ( void )
 {
-if(1) // CUI32 board
+if(0) // CUI32 board
 {
     PUT32(TRISECLR,0x1);
     PUT32(PORTESET,0x1);
