@@ -110,3 +110,134 @@ C based example.  Future examples will use more peripherals and get
 progressively more complicated.  No desire to clone the Microchip
 libraries or anything like that, take the programmers reference,
 schematics and figure things out.
+
+
+In case you want to roll your own tools that you can compile these
+examples with here are some notes.  Binutils is used by both gcc and
+llvm in these examples, gives you an assembler and linker which
+is all you need if assembly language is what you are after.  If you run
+linux/Ubuntu you probably already have a number of the development tools
+as you are probably already a programmer/developer.  Things like
+build-essential, automake, etc. you will need bison and flex which
+you may not already have, and for the more recent gcc versions
+libgmp3-dev, libmpfr-dev and libmpc-dev (apt-get install all of these
+items BTW).
+
+So binutils, at the time of this writing the most current is:
+wget http://ftp.gnu.org/gnu/binutils/binutils-2.21.1a.tar.bz2
+
+> tar xjvf binutils-2.21.1a.tar.bz2
+> cd binutils-2.21.1
+> mkdir build
+> cd build
+> ../configure --target=mips-none-elf --prefix=/opt/mips-none-elf
+this takes a bit, not long
+> make
+this takes longer depending on your machine, if you have multiple
+cores then put the number of cores:
+> make -j 4
+this still takes a while but much faster in parallel.  you may figure
+out on the way that you need to install something else and have to try
+a few times.  using a directory (like build, it doesnt have to
+be a subdir of the binutils sources) to configure/build in you can
+easily just delete that directory instead of the whole binutils tree
+to start over fresh.  when you get a clean build then
+> make install
+that might need a sudo on it...
+
+Add this to your path so gas and ld are available for the gcc build.
+> PATH=/opt/mips-none-elf/bin:$PATH
+
+Now for gcc if you are interested
+>wget http://ftp.gnu.org/gnu/gcc/gcc-4.6.1/gcc-core-4.6.1.tar.gz
+>tar xzvf gcc-core-4.6.1.tar.gz
+> cd gcc-4.6.1
+> mkdir build
+> cd build
+>../configure --target=mips-none-elf --prefix=/opt/mips-none-elf \
+>--disable-nls --enable-languages=c --disable-libssp --disable-libmudflap \
+>--disable-libquadmath --without-headers --with-newlib
+takes a while, not long
+>make
+takes a really long time, multi core or fast computer makes a huge
+difference, put the number of cores in there
+>make -j 4
+same deal, if you didnt get libmpfr or libmpc for example you will
+have to keep trying.  not long ago a single apt-get install libmpfr-dev
+would give you the things you needed for building gcc, then it was that
+you had to do both libmpfr and libgmp3, now you have to manually do all
+three libmpfr-dev, libgmp3-dev and libmpc-dev.  to get a gcc 4.6 built.
+of course I am running an older Ubuntu 10.04 LTS. and 10.10 on some
+machines.  when gcc finishes building successfully
+>make install
+I dont know if that needs a sudo or not, it might.
+
+Now anytime you want to use it PATH=/opt/mips-none-elf/bin:$PATH
+tools are mips-none-elf-gcc, mips-none-elf-as, etc.
+
+When using with my Makefiles either:
+> make MIPSGNU=mips-none-elf
+Or change the line in the makefile to use the alternate prefix.  It is
+possible the tools will build for you with the same prefix as
+Codesourcery used.  mips-sde-elf.
+
+
+Building the llvm 29 release
+
+>svn co http://llvm.org/svn/llvm-project/llvm/branches/release_29/ llvm29
+>cd llvm29
+>cd tools
+>svn co http://llvm.org/svn/llvm-project/cfe/branches/release_29/ clang
+>cd ..
+>./configure --enable-optimized --disable-doxygen --prefix=/llvm29
+>make
+takes forever, -j num helps greatly. can change it from go get lunch
+amount of time to go get a coke from the coke machine amount of time.
+>make install
+
+
+Building the trunk is as simple:
+
+>svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm
+>cd llvm
+>cd tools
+>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang
+>cd ..
+>./configure --enable-optimized --disable-doxygen --prefix=/llvm
+>make
+>make install
+
+For both from your toplevel llvm or llvm29 source directory
+
+> make update
+
+will pull in svn updates for both llvm trunk and clang trunk.  The
+cutting edge development will have daily activity and there are definitely
+times where some checkins do not work, sometimes you are doing a
+update while pushes are going in, so I normally do two or three
+make updates in a row to wait for no activity.  Definitely, unfortunately
+do a make clean to clean out intermediate files, unfortunately the
+make system doesnt catch everything, the make, make install again.
+If it fails to build, try some more make updates or wait for a while
+for whomever to find the build bug and fix it and check in a patch.
+
+A/The reason for having the trunk is that when you find and want to file
+a bug you may find that a number of them have been found and fixed and
+by running the prior release, it is stable but does not have all
+bugfixes backported, if any.
+
+The above (gcc) does not necessarily give you a C library, or even gcc
+library for that matter, I have no use for those in an embedded
+environment so it doesnt bother me.  It might bother you, so more work
+may be required. Likewise I dont use C++ so I use the core gcc tarball
+not the full gcc tarball.  With gcc in general you are likely to have
+floating point problems, with this chip not having an fpu (well I dont
+see it mentioned in the docs) a soft fpu with gcc is that much more
+painful.  Here again I have no use for floating point in embedded work
+so these tools usually work great for me.
+
+Apple has put a lot of resources into llvm development putting the results
+back into the open source world.  The last couple bugs I filed were
+handled by @apple.com email addresses during weekday work hours.  I think
+llvm is used for iphone app development so the core compile and at least
+arm backend is maturing nicely.
