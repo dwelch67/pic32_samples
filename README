@@ -126,6 +126,8 @@ items BTW).
 So binutils, at the time of this writing the most current is:
 wget http://ftp.gnu.org/gnu/binutils/binutils-2.21.1a.tar.bz2
 
+Note 2.22 fails to build for mips
+
 > tar xjvf binutils-2.21.1a.tar.bz2
 > cd binutils-2.21.1
 > mkdir build
